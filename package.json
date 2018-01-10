@@ -1,0 +1,23 @@
+{
+  "name": "amazonishhw",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Co-su/AmazonishHW.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Co-su/AmazonishHW/issues"
+  },
+  "homepage": "https://github.com/Co-su/AmazonishHW#readme",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express-handlebars": "^3.0.0"
+  }
+}
