@@ -22,28 +22,28 @@ function start() {
   inquirer
     .prompt({
       name: "perusal",
-      type: "rawlist",
-      message: "Welcome!  Feel free to >PERUSE< the collection for a game of your choice.  Let me know when you're ready to >CHECK OUT<.",
+      type: "list",
+      message: "Welcome to the Game Shelf!  Feel free to >PERUSE< the collection for a game of your choice.  Let me know when you're ready to >CHECK OUT<.",
       choices: ["PERUSE", "CHECK OUT"]
     })
     .then(function(answer) {
       // based on their answer, either call the bid or the post functions
       if (answer.perusal.toUpperCase() === "PERUSE") {
-        showStock();
+        accessStock();
       } else {
         addToCart();
       }
     });
 }
 
-function showStock(){
+function accessStock(){
   connection.query("SELECT * FROM products", function(err, results) {
     if (err) throw err;
     // once you have the items, prompt the user for which they'd like to bid on
     inquirer
       .prompt({
         name: "action",
-        type: "rawlist",
+        type: "list",
         message: "What would you like to do?",
         choices: [
           "Find games by accessibility",
@@ -58,10 +58,10 @@ function showStock(){
             break;
 
           case "Find games by publisher":
-            multiSearch();
+            pubSearch();
             break;
 
-          case "Find games by name":
+          case "Just show me everything, thanks.":
             rangeSearch();
             break;
 
@@ -71,28 +71,92 @@ function showStock(){
 }
 
 function accessSearch() {
+  console.log("|")
+  console.log("|   Board games are rated among the community by their accessibility.")
+  console.log("|")
+  console.log("|   Factors like play time, player count, and mechanical depth are all considered when determining their classification.")
+  console.log("|")
   inquirer
     .prompt({
       name: "accessibility",
-      type: "rawlist",
-      message: "What level of accessibility would you like?"
+      type: "list",
+      message: "What kind of game are you looking for?",
       choices: [
-        "Gateway Games",
-        "Middleweight Games",
-        "Heavyweight Games"
+        "Gateway Game",
+        "Middleweight Game",
+        "Heavyweight Game"
       ]
     })
     .then(function(answer) {
-      var query = "SELECT title, msrp, accessibility FROM bamazon WHERE ?";
-      connection.query(query, { accessibility: answer.accessibility }, function(err, res) {
+      var query = "SELECT * FROM products WHERE department_name = ?";
+      connection.query( query, [answer.accessibility], function(err, res) {
         for (var i = 0; i < res.length; i++) {
-          console.log(" || Title: " + res[i].product_name + " || MSRP: $" + res[i].msrp);
+          console.log("|  <>  " + res[i].product_name + "  <>  MSRP: $" + res[i].msrp + "   <>  sku: " + res[i].item_id);
         }
-        runSearch();
       });
     });
-}
+  }
 
+function pubSearch() {
+  console.log("|")
+  console.log("|   We carry a wide variety of games from a multitude of publishers.")
+  console.log("|")
+
+  inquirer
+    .prompt({
+      name: "publisher",
+      type: "list",
+      message: "Who are you looking to shop from?",
+      choices: [
+        "Asmodee",
+        "Avalon Hill",
+        "Cards Against Humanity",
+        "Cephalofair",
+        "Days of Wonder",
+        "Kingdom Death",
+        "Leder Games",
+        "Repos Production",
+        "Stonemeier Games",
+        "Tasty Minstrel Games",
+        "Wizards of the Coast",
+        "Z-Man Games"
+      ]
+    })
+    .then(function(answer) {
+      var query = "SELECT * FROM products WHERE publisher = ?";
+      connection.query( query, [answer.publisher], function(err, res) {
+        for (var i = 0; i < res.length; i++) {
+          console.log("|  <>  " + res[i].product_name + "  <>  MSRP: $" + res[i].msrp + "   <>  sku: " + res[i].item_id);
+        }
+      });
+    });
+  redirector()
+  }
+
+function redirector(){
+    inquirer
+      .prompt({
+        name: "action",
+        type: "list",
+        message: "What would you like to do?",
+        choices: [
+          "|    Purchase an item.",
+          "|    Go Back to the beginning"
+        ]
+      })
+      .then(function(answer) {
+        switch (answer.action) {
+          case "|    Purchase an item.":
+            addToCart();
+            break;
+
+          case "|    Go Back to the beginning":
+            start();
+            break;
+
+        }
+      });
+}
 
 
 function addToCart(){
