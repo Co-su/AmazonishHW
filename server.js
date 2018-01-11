@@ -1,22 +1,9 @@
-var express = require("express");
-var bodyParser = require("body-parser");
-
-var app = express();
-var port = 3000;
-
-// Parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-
-var exphbs = require("express-handlebars");
-
-app.engine("handlebars", exphbs({ defaultLayout: "main" }));
-app.set("view engine", "handlebars");
-
 var mysql = require("mysql");
+var inquirer = require("inquirer");
 
 var connection = mysql.createConnection({
   host: "localhost",
+  port: 3306,
   user: "cosu",
   password: "csulli0892",
   database: "bamazon"
@@ -27,81 +14,111 @@ connection.connect(function(err) {
     console.error("error connecting: " + err.stack);
     return;
   }
-
   console.log("connected as id " + connection.threadId);
+  start();
 });
 
+function start() {
+  inquirer
+    .prompt({
+      name: "perusal",
+      type: "rawlist",
+      message: "Welcome!  Feel free to >PERUSE< the collection for a game of your choice.  Let me know when you're ready to >CHECK OUT<.",
+      choices: ["PERUSE", "CHECK OUT"]
+    })
+    .then(function(answer) {
+      // based on their answer, either call the bid or the post functions
+      if (answer.perusal.toUpperCase() === "PERUSE") {
+        showStock();
+      } else {
+        addToCart();
+      }
+    });
+}
 
-// Use Handlebars to render the main index.html page with the todos in it.
-app.get("/", function(req, res) {
-  connection.query("SELECT * FROM products;", function(err, data) {
-    if (err) {
-      return res.status(500).end();
-    }
+function showStock(){
+  connection.query("SELECT * FROM products", function(err, results) {
+    if (err) throw err;
+    // once you have the items, prompt the user for which they'd like to bid on
+    inquirer
+      .prompt({
+        name: "action",
+        type: "rawlist",
+        message: "What would you like to do?",
+        choices: [
+          "Find games by accessibility",
+          "Find games by publisher",
+          "find games by name"
+        ]
+      })
+      .then(function(answer) {
+        switch (answer.action) {
+          case "Find games by accessibility":
+            accessSearch();
+            break;
 
-    res.render("index", { plans: data });
+          case "Find games by publisher":
+            multiSearch();
+            break;
+
+          case "Find games by name":
+            rangeSearch();
+            break;
+
+        }
+      });
   });
-});
+}
+
+function accessSearch() {
+  inquirer
+    .prompt({
+      name: "accessibility",
+      type: "rawlist",
+      message: "What level of accessibility would you like?"
+      choices: [
+        "Gateway Games",
+        "Middleweight Games",
+        "Heavyweight Games"
+      ]
+    })
+    .then(function(answer) {
+      var query = "SELECT title, msrp, accessibility FROM bamazon WHERE ?";
+      connection.query(query, { accessibility: answer.accessibility }, function(err, res) {
+        for (var i = 0; i < res.length; i++) {
+          console.log(" || Title: " + res[i].product_name + " || MSRP: $" + res[i].msrp);
+        }
+        runSearch();
+      });
+    });
+}
 
 
-// Create a new todo
-app.post("/todos", function(req, res) {
-  connection.query("INSERT INTO plans (plan) VALUES (?)", [req.body.plan], function(err, result) {
-    if (err) {
-      return res.status(500).end();
-    }
 
-    // Send back the ID of the new todo
-    res.json({ id: result.insertId });
-    console.log({ id: result.insertId });
+function addToCart(){
+  connection.query("SELECT * FROM products", function(err, results) {
+    if (err) throw err;
+      // once you have the items, prompt the user for which they'd like to bid on
+    inquirer.prompt([
+      {
+        name: "choice",
+        type: "rawlist",
+        choices: function() {
+          var choiceArray = [];
+          for (var i = 0; i < results.length; i++) {
+            choiceArray.push(results[i].item_name);
+          }
+          return choiceArray;
+        }
+      },
+      {
+        message: "What auction would you like to place a bid in?"
+      },
+      {
+        name: "bid",
+        type: "input",
+        message: "How much would you like to bid?"
+      }
+    ]);
   });
-});
-
-
-// Retrieve all todos
-app.get("/products", function(req, res) {
-  connection.query("SELECT * FROM products;", function(err, data) {
-    if (err) {
-      return res.status(500).end();
-    }
-
-    res.json(data);
-  });
-});
-
-
-// Update a todo
-app.put("/todos/:id", function(req, res) {
-  connection.query("UPDATE plans SET plan = ? WHERE id = ?", [req.body.plan, req.params.id], function(err, result) {
-    if (err) {
-      // If an error occurred, send a generic server faliure
-      return res.status(500).end();
-    } else if (result.changedRows == 0) {
-      // If no rows were changed, then the ID must not exist, so 404
-      return res.status(404).end();
-    } else {
-      res.status(200).end();
-    }
-  });
-});
-
-
-// Delete a todo
-app.delete("/todos/:id", function(req, res) {
-  connection.query("DELETE FROM plans WHERE id = ?", [req.params.id], function(err, result) {
-    if (err) {
-      // If an error occurred, send a generic server faliure
-      return res.status(500).end();
-    } else if (result.affectedRows == 0) {
-      // If no rows were changed, then the ID must not exist, so 404
-      return res.status(404).end();
-    } else {
-      res.status(200).end();
-    }
-  });
-});
-
-
-app.listen(port, function() {
-  console.log("listening on port", port);
-});
+}
