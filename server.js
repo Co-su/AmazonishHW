@@ -135,51 +135,83 @@ function pubSearch() {
   }
 
 function redirector(){
+  inquirer
+     .prompt({
+      name: "action",
+      type: "list",
+      message: "What would you like to do?",
+      choices: [
+        "Go to Checkout.",
+        "Go back to the beginning."
+      ]
+    })
+    .then(function(answer) {
+      switch (answer.action) {
+        case "Go to Checkout.":
+          checkout();
+          break;
+          case "Go back to the beginning.":
+          start();
+          break;
+      }
+   });
+  };
+
+function checkout() {
+  connection.query("SELECT * FROM products", function(err, results) {
+    if (err) throw err;
     inquirer
       .prompt({
-        name: "action",
-        type: "list",
-        message: "What would you like to do?",
-        choices: [
-          "Go to Checkout.",
-          "Go Back to the beginning."
-        ]
-      })
-      .then(function(answer) {
-        switch (answer.action) {
-          case "|    Purchase an item.":
-            checkout();
-            break;
-
-          case "|    Go back to the beginning":
-            start();
-            break;
-        }
-      });
-}
-
-
-function checkout(){
-  var query = "SELECT product_name, msrp, stock FROM products";
-  connection.query("SELECT product_name, msrp, stock FROM products", function(err, res) {
-    if (err) throw err;
-    // console.log(res)
-      // once you have the items, prompt the user for which they'd like to bid on
-    inquirer.prompt([
-      {
-        name: "choice",
-        type: "list",
-        message: "GameShelf has the following titles available:",
-        choices: function() {
-          var choiceArray = [];
-          connection.query("SELECT product_name, msrp, stock FROM products", function(err, res) {
-                for (var i = 0; i < res.length; i++) {
-                choiceArray.push("|  <>  " + res[i].product_name + "  <>  MSRP: $" + res[i].msrp + "   <>  stock: " + res[i].stock);
-                }
-              return choiceArray;
-            });
+          name: "choice",
+          type: "list",
+          choices: function() {
+            var choiceArray = [];
+            for (var i = 0; i < results.length; i++) {
+              choiceArray.push(results[i].product_name + "  <>  MSRP: $" + results[i].msrp + "   <>  stock: " + results[i].stock);
+                      }
+            return choiceArray;
+                    },
+          message: "What item interests you?"
+                  })
+          .then(function(answer) {
+          if ([answer.choice.stock] != 0) {
+              console.log("Your item will be shipped shortly.");
+              console.log(answer.choice);
+              ("UPDATE ? SET stock WHERE ?");
+              console.log(answer.choice.stock);
+              redirector();
+          } else {
+              console.log("Sorry, that item is out of stock.");
+              redirector();
           }
-        }
-      ]);
-    })
-  };
+        })
+      })
+    };
+//   };
+// }
+
+
+        // if (chosenItem.highest_bid < parseInt(answer.bid)) {
+        //   // bid was high enough, so update db, let the user know, and start over
+        //   connection.query(
+        //     "UPDATE auctions SET ? WHERE ?",
+        //     [
+        //       {
+        //         highest_bid: answer.bid
+        //       },
+        //       {
+        //         id: chosenItem.id
+        //       }
+        //     ],
+        //     function(error) {
+        //       if (error) throw err;
+        //       console.log("Bid placed successfully!");
+        //       start();
+        //     }
+        //   );
+        // }
+        // else {
+        //   // bid wasn't high enough, so apologize and start over
+        //   console.log("Your bid was too low. Try again...");
+        //   start();
+        // }
