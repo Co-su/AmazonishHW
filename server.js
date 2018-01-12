@@ -174,10 +174,11 @@ function checkout() {
           message: "What item interests you?"
                   })
           .then(function(answer) {
-          if ([answer.choice.stock] != 0) {
+          var stockchoice = [answer.choice.stock]
+          if ([answer.choice.stock] <= 1) {
               console.log("Your item will be shipped shortly.");
               console.log(answer.choice);
-              ("UPDATE ? SET stock WHERE ?");
+              ("UPDATE products SET " + stockchoice + "");
               console.log(answer.choice.stock);
               redirector();
           } else {
