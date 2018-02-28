@@ -26,7 +26,6 @@ function start() {
       choices: ["CUSTOMER", "MANAGER LOGIN","SUPERVISOR LOGIN"]
     })
     .then(function(answer) {
-      // based on their answer, either call the bid or the post functions
       if (answer.perusal.toUpperCase() === "CUSTOMER") {
         accessStock();
       } else if (answer.perusal.toUpperCase() === "MANAGER LOGIN"){
@@ -40,7 +39,6 @@ function start() {
 function accessStock(){
   connection.query("SELECT * FROM products", function(err, results) {
     if (err) throw err;
-    // once you have the items, prompt the user for which they'd like to bid on
     inquirer
       .prompt({
         name: "action",
@@ -188,31 +186,3 @@ function checkout() {
         })
       })
     };
-//   };
-// }
-
-
-        // if (chosenItem.highest_bid < parseInt(answer.bid)) {
-        //   // bid was high enough, so update db, let the user know, and start over
-        //   connection.query(
-        //     "UPDATE auctions SET ? WHERE ?",
-        //     [
-        //       {
-        //         highest_bid: answer.bid
-        //       },
-        //       {
-        //         id: chosenItem.id
-        //       }
-        //     ],
-        //     function(error) {
-        //       if (error) throw err;
-        //       console.log("Bid placed successfully!");
-        //       start();
-        //     }
-        //   );
-        // }
-        // else {
-        //   // bid wasn't high enough, so apologize and start over
-        //   console.log("Your bid was too low. Try again...");
-        //   start();
-        // }

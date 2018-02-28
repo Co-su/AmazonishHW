@@ -1,1 +1,1 @@
-# AmazonishHW
+This is a simulation of a virtual storefront and a basic exercise in utilizing MYSQL databases.  Currently console-based, will implement client-side at a later date.
